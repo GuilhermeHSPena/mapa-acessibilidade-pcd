@@ -1,0 +1,47 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model places {
+  id         String    @id
+  name       String
+  address    String?
+  lat        Decimal?  @db.Decimal(9, 6)
+  lng        Decimal?  @db.Decimal(9, 6)
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  reviews    reviews[]
+}
+
+model reviews {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id           String?   @db.Uuid
+  place_id          String?
+  rating_wheelchair Int?
+  rating_bathroom   Int?
+  rating_entry      Int?
+  rating_parking    Int?
+  rating_hearing    Int?
+  rating_visual     Int?
+  comment           String?
+  created_at        DateTime? @default(now()) @db.Timestamp(6)
+  updated_at        DateTime? @default(now()) @db.Timestamp(6)
+  edited            Boolean?  @default(false)
+  places            places?   @relation(fields: [place_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users             users?    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([user_id, place_id], map: "unique_review_per_user_place")
+}
+
+model users {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String
+  email      String    @unique
+  image      String?
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  reviews    reviews[]
+}
